@@ -54,7 +54,7 @@ local progress = obj.track3
 local lnflag, notemplateflag = false, false
 require("textmodule")
 
-if textmodule.getinfo("version", 2)<24 then
+if textmodule.getinfo("version", 2)<141 then
 	textmodule = nil
 end
 
