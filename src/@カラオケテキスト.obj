@@ -1,15 +1,15 @@
 --[[
-カラオケテキスト v2.6 2022/03/22
+カラオケテキスト v3.0 2022/12/05
 
 ＊テスト環境
  ・AviUtl 1.10
  ・exedit 0.93rc1
- ・textmodule v1.3.1
+ ・textmodule v1.4.1
 
 ＊導入方法
 
- 1.「@カラオケテキスト.obj」と「karaoke_text」フォルダ を scriptフォルダ or その直下のフォルダに入れる
- 2.「textmodule.dll」を同じ場所に入れる
+ 1.「@カラオケテキスト.obj」、「karaoke_text」フォルダ、「S_KaraokeText.dll」 を scriptフォルダ or その直下のフォルダに入れる
+ 2.「textmodule.dll」を導入する
  3.カスタムオブジェクトから「カラオケテキスト」を選択
 
 
@@ -53,6 +53,7 @@ local size, rubySize, rubyPos, edgeSize, gradWidth = obj.track0, obj.track1, off
 local progress = obj.track3
 local lnflag, notemplateflag = false, false
 require("textmodule")
+require("S_KaraokeText")
 
 if textmodule.getinfo("version", 2)<141 then
 	textmodule = nil
@@ -221,17 +222,27 @@ obj.setoption("drawtarget","tempbuffer", sizeX+edgeSize*2+math.abs(rubyPos[1])+a
 obj.copybuffer("obj", "cache:text") --cacheからobjにコピー
 obj.effect("グラデーション", "幅", gradWidth, "color", gradColor.right[1], "color2", gradColor.right[2])
 obj.effect("縁取り", "サイズ", edgeSize, "color", edgeColor.right, "ぼかし", edgeBokeh)
-obj.effect("クリッピング", "左", progress / 100 * obj.w)
+
+data, w, h = obj.getpixeldata()
+local margin_left, margin_right = S_KaraokeText.check_margin(data, w, h)
+
+obj.effect("クリッピング", "左", (progress / 100) * (obj.w - margin_left - margin_right) + margin_left)
 obj.draw(-obj.w/2 + sizeX/2 + edgeSize + math.abs(rubyPos[1])/2 + adjustTempBufferWidth/2)
 
 --左側テキスト
 obj.copybuffer("obj", "cache:text") --tempbufferからobjにコピー
 obj.effect("グラデーション", "幅", gradWidth, "color", gradColor.left[1], "color2", gradColor.left[2])
 obj.effect("縁取り", "サイズ", edgeSize, "color", edgeColor.left, "ぼかし", edgeBokeh)
-obj.effect("クリッピング", "右", (1 - progress / 100) * obj.w)
+data, w, h = obj.getpixeldata()
+local margin_left, margin_right = S_KaraokeText.check_margin(data, w, h)
+obj.effect("クリッピング", "右", (1 - progress / 100) * (obj.w - margin_left - margin_right) + margin_right)
 obj.draw(obj.w/2 - sizeX/2 - edgeSize - math.abs(rubyPos[1])/2 - adjustTempBufferWidth/2)
 
+--描画
 obj.load("tempbuffer")
+data, w, h = obj.getpixeldata()
+local margin_left, margin_right = S_KaraokeText.check_margin(data, w, h)
+obj.effect("クリッピング", "右", margin_right, "左", margin_left)
 obj.draw()
 
 local r = math.rad(obj.rz)
